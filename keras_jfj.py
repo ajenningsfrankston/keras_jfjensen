@@ -6,6 +6,6 @@ import numpy as np
 import pandas as pd
 
 
-training_data = pd.read_csv('~/numerai_data/numerai_training_data.csv', header=0)
-tournament_data = pd.read_csv('~/numerai_data/numerai_tournament_data.csv', header=0)
+training_data = pd.read_csv('~/numerai_datasets/numerai_training_data.csv', header=0)
+tournament_data = pd.read_csv('~/numerai_datasets/numerai_tournament_data.csv', header=0)
 
