@@ -38,8 +38,8 @@ def create_model(neurons=200, dropout=0.2):
 
 model = KerasClassifier(build_fn=create_model, epochs=8, batch_size=128, verbose=0)
 
-neurons = [8, 16]
-dropout = [0.01, 0.4]
+neurons = [16, 22]
+dropout = [0.01, 0.1]
 param_grid = dict(neurons=neurons, dropout=dropout)
 
 gkf = GroupKFold(n_splits=5)
@@ -54,3 +54,44 @@ stds = grid_result.cv_results_['std_test_score']
 params = grid_result.cv_results_['params']
 for mean, stdev, param in zip(means, stds, params):
     print("%f (%f) with: %r" % (mean, stdev, param))
+
+# check consistency
+
+def check_consistency(model, valid_data):
+    eras = valid_data.era.unique()
+    count = 0
+    count_consistent = 0
+    for era in eras:
+        count += 1
+        current_valid_data = valid_data[validation_data.era == era]
+        features = [f for f in list(complete_training_data) if "feature" in f]
+        X_valid = current_valid_data[features]
+        Y_valid = current_valid_data["target"]
+        loss = model.evaluate(X_valid.values, Y_valid.values, batch_size=128, verbose=0)[0]
+        if (loss < -np.log(.5)):
+            consistent = True
+            count_consistent += 1
+        else:
+            consistent = False
+        print("{}: loss - {} consistent: {}".format(era, loss, consistent))
+    print("Consistency: {}".format(count_consistent / count))
+
+
+check_consistency(grid.best_estimator_.model, validation_data)
+
+# create predictions
+from time import strftime,gmtime
+
+x_prediction = tournament_data[features]
+t_id = tournament_data["id"]
+y_prediction = grid.best_estimator_.model.predict_proba(x_prediction.values, batch_size=128)
+results = np.reshape(y_prediction,-1)
+results_df = pd.DataFrame(data={'probability':results})
+joined = pd.DataFrame(t_id).join(results_df)
+# path = "predictions_w_loss_0_" + '{:4.0f}'.format(history.history['loss'][-1]*10000) + ".csv"
+filename = 'predictions_{:}'.format(strftime("%Y-%m-%d_%Hh%Mm%Ss", gmtime())) + '.csv'
+path = '~/numerai_predictions/' +filename
+print()
+print("Writing predictions to " + path.strip())
+# # Save the predictions out to a CSV file
+joined.to_csv(path,float_format='%.15f', index=False)
