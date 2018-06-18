@@ -38,8 +38,8 @@ def create_model(neurons=200, dropout=0.2):
 
 model = KerasClassifier(build_fn=create_model, epochs=8, batch_size=128, verbose=0)
 
-neurons = [16, 22]
-dropout = [0.01, 0.1]
+neurons = [16, 32]
+dropout = [0.1, 0.3]
 param_grid = dict(neurons=neurons, dropout=dropout)
 
 gkf = GroupKFold(n_splits=5)
@@ -56,6 +56,7 @@ for mean, stdev, param in zip(means, stds, params):
     print("%f (%f) with: %r" % (mean, stdev, param))
 
 # check consistency
+
 
 def check_consistency(model, valid_data):
     eras = valid_data.era.unique()
